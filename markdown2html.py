@@ -1,163 +1,52 @@
 #!/usr/bin/python3
 """
-Script to convert Markdown to HTML.
+This is a script to convert a Markdown file to HTML.
 """
-import sys
-import os
+
+import argparse
+import pathlib
 import re
-import hashlib
 
 
-# Check if the number of arguments is correct
-if len(sys.argv) != 3:
-    print("Usage: ./markdown2html.py README.md README.html", file=sys.stderr)
-    sys.exit(1)
-
-
-# Extract arguments
-markdown_file = sys.argv[1]
-html_file = sys.argv[2]
-
-
-# Check if Markdown file exists
-if not os.path.exists(markdown_file):
-    print(f"Missing {markdown_file}", file=sys.stderr)
-    sys.exit(1)
-
-
-# Read Markdown content
-with open(markdown_file, 'r') as md_file:
-    markdown_content = md_file.read()
-
-
-# Function to convert Markdown headings to HTML
-def convert_headings(match):
+def convert_md_to_html(input_file, output_file):
     """
-    Script to convert Markdown to HTML.
+    Converts markdown file to HTML file
     """
-    level = len(match.group(1))
-    return f"<h{level}>{match.group(2)}</h{level}>"
+    # Read the contents of the input file
+    with open(input_file, encoding='utf-8') as f:
+        md_content = f.readlines()
+
+    html_content = []
+    for line in md_content:
+        # Check if the line is a heading
+        match = re.match(r'(#){1,6} (.*)', line)
+        if match:
+            # Get the level of the heading
+            h_level = len(match.group(1))
+            # Get the content of the heading
+            h_content = match.group(2)
+            # Append the HTML equivalent of the heading
+            html_content.append(f'<h{h_level}>{h_content}</h{h_level}>\n')
+        else:
+            html_content.append(line)
+
+    # Write the HTML content to the output file
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.writelines(html_content)
 
 
-# Convert Markdown headings to HTML
-html_content = re.sub(
-        r'^(\#{1,6})\s(.+)$',
-        convert_headings,
-        markdown_content,
-        flags=re.M
-        )
+if __name__ == '__main__':
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description='Convert markdown to HTML')
+    parser.add_argument('input_file', help='path to input markdown file')
+    parser.add_argument('output_file', help='path to output HTML file')
+    args = parser.parse_args()
 
+    # Check if the input file exists
+    input_path = pathlib.Path(args.input_file)
+    if not input_path.is_file():
+        print(f'Missing {input_path}', file=sys.stderr)
+        sys.exit(1)
 
-# Function to convert Markdown unordered lists to HTML
-def convert_unordered_lists(match):
-    """
-    Script to convert Markdown to HTML.
-    """
-    items = match.group(1).split('\n')
-    items = [f"<li>{item.strip()}</li>" for item in items if item.strip()]
-    return f"<ul>\n{''.join(items)}\n</ul>"
-
-
-# Convert Markdown unordered lists to HTML
-html_content = re.sub(
-        r'^\s*\-\s(.+)$',
-        convert_unordered_lists,
-        html_content,
-        flags=re.M
-        )
-
-
-# Function to convert Markdown ordered lists to HTML
-def convert_ordered_lists(match):
-    """
-    Script to convert Markdown to HTML.
-    """
-    items = match.group(1).split('\n')
-    items = [f"<li>{item.strip()}</li>" for item in items if item.strip()]
-    return f"<ol>\n{''.join(items)}\n</ol>"
-
-
-# Convert Markdown ordered lists to HTML
-html_content = re.sub(
-        r'^\s*\*\s(.+)$',
-        convert_ordered_lists,
-        html_content,
-        flags=re.M
-        )
-
-
-# Function to convert Markdown paragraphs to HTML
-def convert_paragraphs(match):
-    """
-    Script to convert Markdown to HTML.
-    """
-    lines = match.group(1).split('\n')
-    lines = [line.strip() for line in lines if line.strip()]
-    return f"<p>\n{'\n'.join(lines)}\n</p>"
-
-
-# Convert Markdown paragraphs to HTML
-html_content = re.sub(
-        r'((?:^(?!\#|\-|\*).+)(?:\n(?!\#|\-|\*).+)*)',
-        convert_paragraphs,
-        html_content,
-        flags=re.M
-        )
-
-
-# Function to convert Markdown bold syntax to HTML
-def convert_bold(match):
-    """
-    Script to convert Markdown to HTML.
-    """
-    return f"<b>{match.group(1)}</b>"
-
-
-# Convert Markdown bold syntax to HTML
-html_content = re.sub(r'\*\*(.+?)\*\*', convert_bold, html_content)
-
-
-# Function to convert Markdown italic syntax to HTML
-def convert_italic(match):
-    return f"<em>{match.group(1)}</em>"
-
-
-# Convert Markdown italic syntax to HTML
-html_content = re.sub(r'__(.+?)__', convert_italic, html_content)
-
-
-# Function to convert Markdown MD5 syntax to HTML
-def convert_md5(match):
-    """
-    Script to convert Markdown to HTML.
-    """
-    content = match.group(1)
-    return hashlib.md5(content.encode()).hexdigest()
-
-
-# Convert Markdown MD5 syntax to HTML
-html_content = re.sub(r'\[\[(.+?)\]\]', lambda x: convert_md5(x), html_content)
-
-
-# Function to convert Markdown removal syntax to HTML
-def remove_characters(match):
-    """
-    Script to convert Markdown to HTML.
-    """
-    return match.group(1).replace('c', '')
-
-
-# Convert Markdown removal syntax to HTML
-html_content = re.sub(
-        r'\(\((.+?)\)\)',
-        lambda x: remove_characters(x),
-        html_content,
-        flags=re.I
-        )
-
-
-# Write HTML content to file
-with open(html_file, 'w') as html:
-    html.write(html_content)
-
-sys.exit(0)
+    # Convert the markdown file to HTML
+    convert_md_to_html(args.input_file, args.output_file)
