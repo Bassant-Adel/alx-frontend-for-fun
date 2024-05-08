@@ -32,6 +32,9 @@ with open(markdown_file, 'r') as md_file:
 
 # Function to convert Markdown headings to HTML
 def convert_headings(match):
+    """
+    Script to convert Markdown to HTML.
+    """
     level = len(match.group(1))
     return f"<h{level}>{match.group(2)}</h{level}>"
 
@@ -47,6 +50,9 @@ html_content = re.sub(
 
 # Function to convert Markdown unordered lists to HTML
 def convert_unordered_lists(match):
+    """
+    Script to convert Markdown to HTML.
+    """
     items = match.group(1).split('\n')
     items = [f"<li>{item.strip()}</li>" for item in items if item.strip()]
     return f"<ul>\n{''.join(items)}\n</ul>"
@@ -63,6 +69,9 @@ html_content = re.sub(
 
 # Function to convert Markdown ordered lists to HTML
 def convert_ordered_lists(match):
+    """
+    Script to convert Markdown to HTML.
+    """
     items = match.group(1).split('\n')
     items = [f"<li>{item.strip()}</li>" for item in items if item.strip()]
     return f"<ol>\n{''.join(items)}\n</ol>"
@@ -79,6 +88,9 @@ html_content = re.sub(
 
 # Function to convert Markdown paragraphs to HTML
 def convert_paragraphs(match):
+    """
+    Script to convert Markdown to HTML.
+    """
     lines = match.group(1).split('\n')
     lines = [line.strip() for line in lines if line.strip()]
     return f"<p>\n{'\n'.join(lines)}\n</p>"
@@ -95,6 +107,9 @@ html_content = re.sub(
 
 # Function to convert Markdown bold syntax to HTML
 def convert_bold(match):
+    """
+    Script to convert Markdown to HTML.
+    """
     return f"<b>{match.group(1)}</b>"
 
 
@@ -113,6 +128,9 @@ html_content = re.sub(r'__(.+?)__', convert_italic, html_content)
 
 # Function to convert Markdown MD5 syntax to HTML
 def convert_md5(match):
+    """
+    Script to convert Markdown to HTML.
+    """
     content = match.group(1)
     return hashlib.md5(content.encode()).hexdigest()
 
@@ -123,6 +141,9 @@ html_content = re.sub(r'\[\[(.+?)\]\]', lambda x: convert_md5(x), html_content)
 
 # Function to convert Markdown removal syntax to HTML
 def remove_characters(match):
+    """
+    Script to convert Markdown to HTML.
+    """
     return match.group(1).replace('c', '')
 
 
