@@ -1,43 +1,142 @@
 #!/usr/bin/python3
 """
-Markdown is awesome! All README.md are made in Markdown
+Script to convert Markdown to HTML.
 """
 import sys
 import os
 import re
+import hashlib
 
-if __name__ == '__main__':
 
-    # Test that the number of arg
-    if len(sys.argv[1:]) != 2:
-        print('Usage: ./markdown2html.py README.md README.html',
-              file=sys.stderr)
-        sys.exit(1)
+# Check if the number of arguments is correct
+if len(sys.argv) != 3:
+    print("Usage: ./markdown2html.py README.md README.html", file=sys.stderr)
+    sys.exit(1)
 
-    # Store the arg
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
 
-    # Checks that the markdown
-    if not (os.path.exists(input_file) and os.path.isfile(input_file)):
-        print(f'Missing {input_file}', file=sys.stderr)
-        sys.exit(1)
+# Extract arguments
+markdown_file = sys.argv[1]
+html_file = sys.argv[2]
 
-    with open(input_file, encoding='utf-8') as file_1:
-        html_content = []
-        md_content = [line[:-1] for line in file_1.readlines()]
-        for line in md_content:
-            heading = re.split(r'#{1,6} ', line)
-            if len(heading) > 1:
-                # Compute the number
-                # determine heading
-                h_level = len(line[:line.find(heading[1])-1])
-                # Append the html equivalent
-                html_content.append(
-                    f'<h{h_level}>{heading[1]}</h{h_level}>\n'
-                )
-            else:
-                html_content.append(line)
 
-    with open(output_file, 'w', encoding='utf-8') as file_2:
-        file_2.writelines(html_content)
+# Check if Markdown file exists
+if not os.path.exists(markdown_file):
+    print(f"Missing {markdown_file}", file=sys.stderr)
+    sys.exit(1)
+
+
+# Read Markdown content
+with open(markdown_file, 'r') as md_file:
+    markdown_content = md_file.read()
+
+
+# Function to convert Markdown headings to HTML
+def convert_headings(match):
+    level = len(match.group(1))
+    return f"<h{level}>{match.group(2)}</h{level}>"
+
+
+# Convert Markdown headings to HTML
+html_content = re.sub(
+        r'^(\#{1,6})\s(.+)$',
+        convert_headings,
+        markdown_content,
+        flags=re.M
+        )
+
+
+# Function to convert Markdown unordered lists to HTML
+def convert_unordered_lists(match):
+    items = match.group(1).split('\n')
+    items = [f"<li>{item.strip()}</li>" for item in items if item.strip()]
+    return f"<ul>\n{''.join(items)}\n</ul>"
+
+
+# Convert Markdown unordered lists to HTML
+html_content = re.sub(
+        r'^\s*\-\s(.+)$',
+        convert_unordered_lists,
+        html_content,
+        flags=re.M
+        )
+
+
+# Function to convert Markdown ordered lists to HTML
+def convert_ordered_lists(match):
+    items = match.group(1).split('\n')
+    items = [f"<li>{item.strip()}</li>" for item in items if item.strip()]
+    return f"<ol>\n{''.join(items)}\n</ol>"
+
+
+# Convert Markdown ordered lists to HTML
+html_content = re.sub(
+        r'^\s*\*\s(.+)$',
+        convert_ordered_lists,
+        html_content,
+        flags=re.M
+        )
+
+
+# Function to convert Markdown paragraphs to HTML
+def convert_paragraphs(match):
+    lines = match.group(1).split('\n')
+    lines = [line.strip() for line in lines if line.strip()]
+    return f"<p>\n{'\n'.join(lines)}\n</p>"
+
+
+# Convert Markdown paragraphs to HTML
+html_content = re.sub(
+        r'((?:^(?!\#|\-|\*).+)(?:\n(?!\#|\-|\*).+)*)',
+        convert_paragraphs,
+        html_content,
+        flags=re.M
+        )
+
+
+# Function to convert Markdown bold syntax to HTML
+def convert_bold(match):
+    return f"<b>{match.group(1)}</b>"
+
+
+# Convert Markdown bold syntax to HTML
+html_content = re.sub(r'\*\*(.+?)\*\*', convert_bold, html_content)
+
+
+# Function to convert Markdown italic syntax to HTML
+def convert_italic(match):
+    return f"<em>{match.group(1)}</em>"
+
+
+# Convert Markdown italic syntax to HTML
+html_content = re.sub(r'__(.+?)__', convert_italic, html_content)
+
+
+# Function to convert Markdown MD5 syntax to HTML
+def convert_md5(match):
+    content = match.group(1)
+    return hashlib.md5(content.encode()).hexdigest()
+
+
+# Convert Markdown MD5 syntax to HTML
+html_content = re.sub(r'\[\[(.+?)\]\]', lambda x: convert_md5(x), html_content)
+
+
+# Function to convert Markdown removal syntax to HTML
+def remove_characters(match):
+    return match.group(1).replace('c', '')
+
+
+# Convert Markdown removal syntax to HTML
+html_content = re.sub(
+        r'\(\((.+?)\)\)',
+        lambda x: remove_characters(x),
+        html_content,
+        flags=re.I
+        )
+
+
+# Write HTML content to file
+with open(html_file, 'w') as html:
+    html.write(html_content)
+
+sys.exit(0)
